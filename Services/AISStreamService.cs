@@ -28,61 +28,35 @@ namespace RealTimeVesselTracking.Services
 
         public async Task StartListeningAsync()
         {
-            using (var client = new ClientWebSocket())
-            {
-                CancellationTokenSource source = new CancellationTokenSource();
-                CancellationToken token = source.Token;
-                using (var ws = new ClientWebSocket())
-                {
-                    {
-                        await ws.ConnectAsync(new Uri("wss://stream.aisstream.io/v0/stream"), token);
-                        await ws.SendAsync(
-                            new ArraySegment<byte>(
-                                Encoding.UTF8.GetBytes(
-                                    $"{{ \"APIKey\": \"{_aisAPIKey}\", \"BoundingBoxes\": [[[-11.0, 178.0], [30.0, 74.0]]]}}")
-                                ), WebSocketMessageType.Text,
-                                true, token
-                        );
-                        byte[] buffer = new byte[4096];
-                        while (ws.State == WebSocketState.Open)
-                        {
-                            var result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), token);
-                            if (result.MessageType == WebSocketMessageType.Close)
-                            {
-                                await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token);
-                            }
-                            else
-                            {
-                                Console.WriteLine($"Received {Encoding.Default.GetString(buffer, 0, result.Count)}");
-                            }
-                        }
-                    }
-                }
-            }
+            Console.WriteLine("Starting live AIS stream...");
+            await ReceiveAndProcessAISData(TimeSpan.MaxValue); // تشغيل غير محدود
         }
 
         public async Task TrackVesselsForThreeMinutes()
         {
             Console.WriteLine("Starting vessel tracking for 3 minutes.....");
+            await ReceiveAndProcessAISData(TimeSpan.FromMinutes(3)); // تشغيل لمدة 3 دقائق
+            Console.WriteLine("Tracking Complete.");
+        }
+
+        // دالة مشتركة لمعالجة البيانات
+        private async Task ReceiveAndProcessAISData(TimeSpan duration)
+        {
             using (var client = new ClientWebSocket())
             {
-                await client.ConnectAsync(new Uri("wss://stream.aisstream.io/v0/stream"), CancellationToken.None);
+                await client.ConnectAsync(new Uri(AIS_STREAM_URL), CancellationToken.None);
                 Console.WriteLine("WebSocket Connected!");
 
-                await client.SendAsync(
-                            new ArraySegment<byte>(
-                                Encoding.UTF8.GetBytes(
-                                    $"{{ \"APIKey\": \"{_aisAPIKey}\", \"BoundingBoxes\": [[[-11.0, 178.0], [30.0, 74.0]]]}}")
-                                ), WebSocketMessageType.Text,
-                                true, CancellationToken.None
-                            );
+                string request = $"{{ \"APIKey\": \"{_aisAPIKey}\", \"BoundingBoxes\": [[[-11.0, 178.0], [30.0, 74.0]]], \"FilterMessageTypes\": [\"PositionReport\"] }}";
+                await client.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(request)), WebSocketMessageType.Text, true, CancellationToken.None);
+
                 var buffer = new byte[8192];
                 var stopwatch = Stopwatch.StartNew();
 
-                while (stopwatch.Elapsed < TimeSpan.FromMinutes(3))
+                while (stopwatch.Elapsed < duration)
                 {
                     var result = await client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                    var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
                     Console.WriteLine($"Received Message: {message}");
 
                     if (message.Contains("PositionReport"))
@@ -92,21 +66,9 @@ namespace RealTimeVesselTracking.Services
                     }
                 }
 
-                Console.WriteLine("Stopping vessel tracking after 3 minutes.");
+                Console.WriteLine("Stopping AIS stream.");
             }
-
-
-            var endTime = DateTime.UtcNow.AddMinutes(3);
-
-            while (DateTime.UtcNow < endTime)
-            {
-                await StartListeningAsync();
-                await Task.Delay(5000);
-            }
-
-            Console.WriteLine("Tracking Complete.");
         }
-
         private async Task ProcessAISMessage(string message)
         {
             Console.WriteLine("Processing AIS Message...");
@@ -116,7 +78,7 @@ namespace RealTimeVesselTracking.Services
                 var json = JObject.Parse(message);
                 var metaData = json["MetaData"];
                 var positionReport = json["Message"]?["PositionReport"];
-                var shipStaticData = json["Message"]?["ShipStaticData"];
+                // var shipStaticData = json["Message"]?["ShipStaticData"];
 
                 if (metaData == null || positionReport == null)
                 {
@@ -131,7 +93,7 @@ namespace RealTimeVesselTracking.Services
                 double course = positionReport["Cog"]?.Value<double>() ?? 0.0;
                 string timestamp = metaData["time_utc"]?.Value<string>() ?? DateTime.UtcNow.ToString("o");
                 string shipName = metaData["ShipName"]?.Value<string>() ?? "Unknown";
-                string shipType = shipStaticData["Type"]?.ToString() ?? "Unknown";
+                string shipType = "Unknown";
 
                 if (mmsi == 0 || latitude == 0.0 || longitude == 0.0)
                 {

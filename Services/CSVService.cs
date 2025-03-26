@@ -18,7 +18,7 @@ namespace RealTimeVesselTracking.Services
             using (var connection = new SQLiteConnection(ConnectionString))
             {
                 connection.Open();
-                string query = @"SELECT V.MMSI, V.Name, P.Timestamp, P.Latitude, P.Longitude, P.Speed, P.Temperature, P.WindSpeed, P.WaveHeight
+                string query = @"SELECT V.MMSI, V.Name, P.Timestamp, P.Latitude, P.Longitude, P.Speed, P.Temperature, P.WindSpeed
                                 FROM Positions P
                                 JOIN Vessels V ON P.VesselId = v.Id";
                 
@@ -32,11 +32,11 @@ namespace RealTimeVesselTracking.Services
                     }
 
                     StringBuilder csvContent = new StringBuilder();
-                    csvContent.AppendLine("MMSI,Name,TimeStamp,Latitude,Longitude,Speed,Temperature,WindSpeed,WaveHeight");
+                    csvContent.AppendLine("MMSI,Name,TimeStamp,Latitude,Longitude,Speed,Temperature,WindSpeed");
 
                     while (reader.Read())
                     {
-                        csvContent.AppendLine($"{reader["MMSI"]},{reader["Name"]},{reader["TimeStamp"]},{reader["Latitude"]},{reader["Longitude"]},{reader["Speed"]},{reader["Temperature"]},{reader["WindSpeed"]},{reader["WaveHeight"]}");
+                        csvContent.AppendLine($"{reader["MMSI"]},{reader["Name"]},{reader["TimeStamp"]},{reader["Latitude"]},{reader["Longitude"]},{reader["Speed"]},{reader["Temperature"]},{reader["WindSpeed"]}");
                     }
 
                     File.WriteAllText(filePath, csvContent.ToString());

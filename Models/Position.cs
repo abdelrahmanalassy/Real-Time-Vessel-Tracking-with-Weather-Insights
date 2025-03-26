@@ -12,7 +12,6 @@ namespace RealTimeVesselTracking.Models
         public decimal Course { get; set; }
         public decimal Temperature { get; set; }
         public decimal WindSpeed { get; set; }
-        public decimal WaveHeight { get; set; }
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
 }

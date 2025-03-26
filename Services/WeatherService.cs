@@ -12,7 +12,7 @@ namespace RealTimeVesselTracking.Services
     {
         private static readonly string ApiKey = ConfigHelper.GetConfigValue("OpenWeather:ApiKey");
         private static readonly HttpClient HttpClient = new HttpClient();
-        public static async Task<(decimal Temperature, decimal WindSpeed, decimal WaveHeight)> GetWeatherDataAsync(decimal latitude, decimal longitude)
+        public static async Task<(decimal Temperature, decimal WindSpeed)> GetWeatherDataAsync(decimal latitude, decimal longitude)
         {
             try
             {
@@ -24,16 +24,15 @@ namespace RealTimeVesselTracking.Services
 
                 decimal temperature = weatherData["main"]?["temp"]?.Value<decimal>() ?? 0;
                 decimal windSpeed = weatherData["wind"]?["speed"]?.Value<decimal>() ?? 0;
-                decimal waveHeight = weatherData["waves"]?["height"]?.Value<decimal>() ?? 0; 
 
                 Console.WriteLine($"Weather API Response: {responseBody}");
 
-                return (temperature, windSpeed, waveHeight);
+                return (temperature, windSpeed);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error fetching weather data: {ex.Message}");
-                return (0, 0, 0);
+                return (0, 0);
             }
         }
 
@@ -47,12 +46,6 @@ namespace RealTimeVesselTracking.Services
         {
             var weatherData = GetWeatherDataAsync(latitude, longitude). Result;
             return weatherData.WindSpeed;
-        }
-
-        public decimal GetWaveHeight(decimal latitude, decimal longitude)
-        {
-            var weatherData = GetWeatherDataAsync(latitude, longitude). Result;
-            return weatherData.WaveHeight;
         }
     }
 }

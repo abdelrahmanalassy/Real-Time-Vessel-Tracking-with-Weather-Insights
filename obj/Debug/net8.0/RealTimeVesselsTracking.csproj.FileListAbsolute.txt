@@ -81,3 +81,5 @@ C:\Users\DELL\OneDrive\Desktop\Real Time Vessel Tracking\RealTimeVesselsTracking
 C:\Users\DELL\OneDrive\Desktop\Real Time Vessel Tracking\RealTimeVesselsTracking\obj\Debug\net8.0\RealTimeVesselsTracking.pdb
 C:\Users\DELL\OneDrive\Desktop\Real Time Vessel Tracking\RealTimeVesselsTracking\obj\Debug\net8.0\RealTimeVesselsTracking.genruntimeconfig.cache
 C:\Users\DELL\OneDrive\Desktop\Real Time Vessel Tracking\RealTimeVesselsTracking\obj\Debug\net8.0\ref\RealTimeVesselsTracking.dll
+C:\Users\DELL\OneDrive\Desktop\Real Time Vessel Tracking\RealTimeVesselsTracking\obj\Debug\net8.0\RealTimeVesselsTracking.sourcelink.json
+c:\Users\DELL\OneDrive\Desktop\Real Time Vessel Tracking\RealTimeVesselsTracking\bin\Debug\net8.0\vessel_tracking.db

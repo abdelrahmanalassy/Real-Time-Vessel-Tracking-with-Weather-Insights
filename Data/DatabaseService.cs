@@ -30,8 +30,7 @@ namespace RealTimeVesselTracking.Data
                 CREATE TABLE IF NOT EXISTS Vessels (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 MMSI TEXT UNIQUE NOT NULL,
-                Name TEXT,
-                Type TEXT);";
+                Name TEXT);";
 
                 string CreatePositionsTable = @"
                 CREATE TABLE IF NOT EXISTS Positions (
@@ -43,7 +42,6 @@ namespace RealTimeVesselTracking.Data
                 Course DECIMAL(10,2),
                 Temperature DECIMAL(5,2),
                 WindSpeed DECIMAL(5,2),
-                WaveHeight DECIMAL(5,2),
                 TimeStamp DATETIME DEFAULT CURREN_TIMESTAMP,
                 FOREIGN KEY (VesselId) REFERENCES Vessels(Id));";
 
@@ -60,7 +58,7 @@ namespace RealTimeVesselTracking.Data
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 connection.Open();
-                string query = @"SELECT P.Timestamp, P.Latitude, P.Longitude, P.Speed, P.Temperature, P.WindSpeed, P.WaveHeight
+                string query = @"SELECT P.Timestamp, P.Latitude, P.Longitude, P.Speed, P.Temperature, P.WindSpeed
                                 FROM Positions P
                                 JOIN Vessels V ON P.VesselId = V.Id
                                 WHERE V.MMSI = @MMSI";
@@ -76,7 +74,7 @@ namespace RealTimeVesselTracking.Data
                         }
                         while (reader.Read())
                         {
-                            Console.WriteLine($"Time: {reader["Timestamp"]}, Lat: {reader["Latitude"]}, Long: {reader["Longitude"]}, Speed: {reader["Speed"]} knots, Temp: {reader["Temperature"]}°C, Wind: {reader["WindSpeed"]} knots, Wave: {reader["WaveHeight"]}m");
+                            Console.WriteLine($"Time: {reader["Timestamp"]}, Lat: {reader["Latitude"]}, Long: {reader["Longitude"]}, Speed: {reader["Speed"]} knots, Temp: {reader["Temperature"]}°C, Wind: {reader["WindSpeed"]} knots");
                         }
                     }
                 }
@@ -89,15 +87,15 @@ namespace RealTimeVesselTracking.Data
             {
                 connection.Open();
                 string insertQuery = @"
-                INSERT INTO Vessels (MMSI, Name, Type)
-                VALUES (@MMSI, @Name, @Type)
-                ON CONFLICT(MMSI) DO UPDATE SET Name = excluded.Name, Type=excluded.Type;";
+                INSERT INTO Vessels (MMSI, Name)
+                VALUES (@MMSI, @Name)
+                ON CONFLICT(MMSI) DO UPDATE SET Name = excluded.Name;";
 
                 connection.Execute(insertQuery, vessel);
             }
         }
 
-        public void InsertPositionData(Position position, string shipName, string shipType)
+        public void InsertPositionData(Position position, string shipName)
         {
 
             Console.WriteLine($"Trying to insert data for MMSI {position.VesselId}");
@@ -117,12 +115,11 @@ namespace RealTimeVesselTracking.Data
                         if (vesselCount == 0)
                         {
                             string finalShipName = string.IsNullOrWhiteSpace(shipName) ? "Unknown" : shipName.Trim();
-                            string finalShipType = string.IsNullOrWhiteSpace(shipType) ? "Unknown" : shipType.Trim();
 
-                            Console.WriteLine($"Vessel with MMSI {position.VesselId} not found. Adding it to Vessels with Name: {finalShipName}, Type: {finalShipType}");
+                            Console.WriteLine($"Vessel with MMSI {position.VesselId} not found. Adding it to Vessels with Name: {finalShipName}");
 
-                            string insertVesselQuery = "INSERT INTO Vessels (MMSI, Name, Type) VALUES (@MMSI, @Name, @Type)";
-                            connection.Execute(insertVesselQuery, new { MMSI = position.VesselId, Name = finalShipName, Type = finalShipType }, transaction);
+                            string insertVesselQuery = "INSERT INTO Vessels (MMSI, Name) VALUES (@MMSI, @Name)";
+                            connection.Execute(insertVesselQuery, new { MMSI = position.VesselId, Name = finalShipName }, transaction);
                             Console.WriteLine("Vessel Inserted Successfully!");
 
                         }
@@ -134,12 +131,12 @@ namespace RealTimeVesselTracking.Data
                             return;
                         }
 
-                        Console.WriteLine($"Insert Data: MMSI={position.VesselId}, Lat={position.Latitude}, Lon={position.Longitude}, Speed={position.Speed}, Course={position.Course}, Temp={position.Temperature}, Wind={position.WindSpeed}, Wave={position.WaveHeight}");
+                        Console.WriteLine($"Insert Data: MMSI={position.VesselId}, Lat={position.Latitude}, Lon={position.Longitude}, Speed={position.Speed}, Course={position.Course}, Temp={position.Temperature}, Wind={position.WindSpeed}");
 
                         // Insert Data
                         string insertQuery = @"
-                        INSERT INTO Positions (VesselId, Latitude, Longitude, Speed, Course, Temperature, WindSpeed, WaveHeight, Timestamp)
-                        VALUES ((SELECT Id FROM Vessels WHERE MMSI = @MMSI), @Latitude, @Longitude, @Speed, @Course, @Temperature, @WindSpeed, @WaveHeight, @Timestamp)";
+                        INSERT INTO Positions (VesselId, Latitude, Longitude, Speed, Course, Temperature, WindSpeed, Timestamp)
+                        VALUES ((SELECT Id FROM Vessels WHERE MMSI = @MMSI), @Latitude, @Longitude, @Speed, @Course, @Temperature, @WindSpeed, @Timestamp)";
 
                         Console.WriteLine($"Executing SQL Query: {insertQuery}");
 
@@ -152,14 +149,13 @@ namespace RealTimeVesselTracking.Data
                             command.Parameters.AddWithValue("@Course", position.Course);
                             command.Parameters.AddWithValue("@Temperature", position.Temperature);
                             command.Parameters.AddWithValue("@WindSpeed", position.WindSpeed);
-                            command.Parameters.AddWithValue("@WaveHeight", position.WaveHeight != null ? position.WaveHeight : 0);
                             command.Parameters.AddWithValue("@Timestamp", position.Timestamp);
 
                             Console.WriteLine("Final Data Before Insert:");
                             Console.WriteLine($"MMSI: {position.VesselId}");
                             Console.WriteLine($"Latitude: {position.Latitude}, Longitude: {position.Longitude}");
                             Console.WriteLine($"Speed: {position.Speed}, Course: {position.Course}");
-                            Console.WriteLine($"Temperature: {position.Temperature}, WindSpeed: {position.WindSpeed}, WaveHeight: {position.WaveHeight}");
+                            Console.WriteLine($"Temperature: {position.Temperature}, WindSpeed: {position.WindSpeed}");
 
                             command.ExecuteNonQuery();
                         }
