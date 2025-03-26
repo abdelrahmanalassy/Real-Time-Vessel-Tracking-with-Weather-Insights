@@ -1,0 +1,10 @@
+-- database: ./vessel_tracking.db
+
+CREATE TABLE Vessels_New AS
+SELECT Id, MMSI, Name
+FROM Vessels;
+
+DROP TABLE Vessels;
+
+ALTER TABLE Vessels_New RENAME TO Vessels;
+
