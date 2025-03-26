@@ -1,9 +1,0 @@
--- database: ../vessel_tracking.db
-
-CREATE TABLE Positions_New AS
-SELECT Speed, Course, Temperature, WindSpeed, TimeStamp
-FROM Positions;
-
-DROP TABLE Positions;
-
-ALTER TABLE Positions_New RENAME TO Positions;
