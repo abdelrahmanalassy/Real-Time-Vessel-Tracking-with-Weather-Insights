@@ -29,17 +29,16 @@ namespace RealTimeVesselTracking.Services
         public async Task StartListeningAsync()
         {
             Console.WriteLine("Starting live AIS stream...");
-            await ReceiveAndProcessAISData(TimeSpan.MaxValue); // تشغيل غير محدود
+            await ReceiveAndProcessAISData(TimeSpan.MaxValue);
         }
 
         public async Task TrackVesselsForThreeMinutes()
         {
             Console.WriteLine("Starting vessel tracking for 3 minutes.....");
-            await ReceiveAndProcessAISData(TimeSpan.FromMinutes(3)); // تشغيل لمدة 3 دقائق
+            await ReceiveAndProcessAISData(TimeSpan.FromMinutes(3));
             Console.WriteLine("Tracking Complete.");
         }
 
-        // دالة مشتركة لمعالجة البيانات
         private async Task ReceiveAndProcessAISData(TimeSpan duration)
         {
             using (var client = new ClientWebSocket())
@@ -93,7 +92,6 @@ namespace RealTimeVesselTracking.Services
                 double course = positionReport["Cog"]?.Value<double>() ?? 0.0;
                 string timestamp = metaData["time_utc"]?.Value<string>() ?? DateTime.UtcNow.ToString("o");
                 string shipName = metaData["ShipName"]?.Value<string>() ?? "Unknown";
-                string shipType = "Unknown";
 
                 if (mmsi == 0 || latitude == 0.0 || longitude == 0.0)
                 {
@@ -101,7 +99,7 @@ namespace RealTimeVesselTracking.Services
                     return;
                 }
 
-                Console.WriteLine($"Vessel: {shipName}, Type: {shipType}, MMSI: {mmsi}");
+                Console.WriteLine($"Vessel: {shipName}, MMSI: {mmsi}");
                 Console.WriteLine($"Latitude: {latitude}, Longitude: {longitude}, Speed: {speed} Knots");
                 Console.WriteLine("Fetching weather data......");
 
@@ -110,14 +108,13 @@ namespace RealTimeVesselTracking.Services
 
                 decimal temperature = weatherService.GetTemperature((decimal)latitude, (decimal)longitude);
                 decimal windSpeed = weatherService.GetWindSpeed((decimal)latitude, (decimal)longitude);
-                decimal waveHeight = weatherService.GetWaveHeight((decimal)latitude, (decimal)longitude);
 
-                Console.WriteLine($"Temperature: {temperature}°C, WindSpeed: {windSpeed} Knots, WaveHeight: {waveHeight} meters");
+                Console.WriteLine($"Temperature: {temperature}°C, WindSpeed: {windSpeed} Knots");
                 Console.WriteLine("Position and Weather Stored in database.\n");
 
-                //await _databaseService.InsertPositionData(mmsi, shipName, shipType, latitude, longitude, speed, course, temperature, windSpeed, waveHeight, timestamp);
+                //await _databaseService.InsertPositionData(mmsi, shipName, latitude, longitude, speed, course, temperature, windSpeed, timestamp);
 
-                Console.WriteLine($"Extracted Data - MMSI: {mmsi}, Vessel Name: {shipName}, Vessel Type: {shipType}, Latitude: {latitude}, Longitude: {longitude}, Speed: {speed}, Course: {course}, Temperature: {temperature}, Wind Speed: {windSpeed}, Wave Height: {waveHeight}");
+                Console.WriteLine($"Extracted Data - MMSI: {mmsi}, Vessel Name: {shipName}, Latitude: {latitude}, Longitude: {longitude}, Speed: {speed}, Course: {course}, Temperature: {temperature}, Wind Speed: {windSpeed}");
 
                 _databaseService.InsertPositionData(new Position
                 {
@@ -128,9 +125,8 @@ namespace RealTimeVesselTracking.Services
                     Course = (decimal)course,
                     Temperature = (decimal)temperature,
                     WindSpeed = (decimal)windSpeed,
-                    WaveHeight = (decimal)waveHeight,
                     Timestamp = DateTime.TryParse(timestamp, out DateTime parsedTimestamp) ? parsedTimestamp : DateTime.UtcNow
-                }, shipName, shipType);
+                }, shipName);
 
                 Console.WriteLine($"Sent Position Data to DatabaseService for MMSI: {mmsi}");
 
