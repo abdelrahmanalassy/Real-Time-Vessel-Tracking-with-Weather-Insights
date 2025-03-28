@@ -1,5 +1,0 @@
--- database: ./vessel_tracking.db
-
-DELETE FROM Vessels WHERE Id IN (
-    SELECT Id FROM Vessels ORDER BY Id ASC LIMIT 67
-);

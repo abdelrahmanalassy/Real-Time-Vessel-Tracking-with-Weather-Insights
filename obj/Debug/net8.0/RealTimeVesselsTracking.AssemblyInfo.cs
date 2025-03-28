@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RealTimeVesselsTracking")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4795ff7d8c5f55ad96d8aaaee3d8a54a718e95c9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+97e5776be19b9302505025f5293160f8bce07e8c")]
 [assembly: System.Reflection.AssemblyProductAttribute("RealTimeVesselsTracking")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RealTimeVesselsTracking")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
